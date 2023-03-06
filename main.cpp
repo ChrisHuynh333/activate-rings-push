@@ -6,7 +6,19 @@
 // pink, purple, red, white, yellow
 int main() 
 {
+    class testClass
+    {
+        public:
+            int number;
+            void setNum(int num)
+            {
+                number = num;
+            }
+    };
+    testClass myInstance[10];
+    for (int i = 0; i < 10; i++) myInstance[i].setNum(i);
     
+
     class Button 
     {
         public:
