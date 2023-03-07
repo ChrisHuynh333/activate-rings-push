@@ -9,7 +9,7 @@
 // Available colors: beige, black, blue, brown, gold, gray, green, magenta,
 // pink, purple, red, white, yellow
 
-const std::vector<Color> color_array {BLUE, GRAY, WHITE, GREEN, PURPLE, YELLOW, RED};
+const std::vector<Color> color_array {BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
 
 class Button 
 {
@@ -152,14 +152,14 @@ int main()
             DrawCircleGradient(game_buttons[k].x, game_buttons[k].y, game_buttons[k].radius, game_buttons[k].color_one, game_buttons[k].color_two);
             
         }
-        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        {
+        // if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        // {
 
-            // if(GetMousePosition().x <= button_one.x + 25 && GetMousePosition().x >= button_one.x - 25)
-            // {
-            //     std::cout << "Hit!" << "\n";
-            // }
-        }
+        //     if(GetMousePosition().x <= button_one.x + 25 && GetMousePosition().x >= button_one.x - 25)
+        //     {
+        //         std::cout << "Hit!" << "\n";
+        //     }
+        // }
         
         EndDrawing();
     }
