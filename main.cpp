@@ -93,18 +93,11 @@ int main()
     std::vector<Button> game_buttons(num_of_buttons);
     std::vector<Target_Button> target_buttons(4);
     
-    for (int i = 0; i < num_of_buttons; i ++)
+    for (int i = 0; i < 4; i ++)
     {   
         set_game_button_attributes(game_buttons.at(i));
-        if (i < 4)
-        {
-            // ADD THESE AS POINTERS?
-            target_buttons.at(i).set_button_attributes(game_buttons.at(i).color_one, game_buttons.at(i).color_two, game_buttons.at(i).color_one_pos, game_buttons.at(i).color_two_pos);
-        }
-        else
-        {
-            check_duplicate_colors_to_targets(target_buttons, game_buttons.at(i));
-        }
+        // ADD THESE AS POINTERS?
+        target_buttons.at(i).set_button_attributes(game_buttons.at(i).color_one, game_buttons.at(i).color_two, game_buttons.at(i).color_one_pos, game_buttons.at(i).color_two_pos);
     }
     std::random_device rd;
     std::mt19937 g(rd());
@@ -123,6 +116,11 @@ int main()
             target_buttons.at(j).set_coords(target_button_x_coord, target_button_y_coord);
             target_button_x_coord += 300;
         }
+        if(!game_buttons.at(j).color_one_pos)
+        {
+            set_game_button_attributes(game_buttons.at(j));
+            check_duplicate_colors_to_targets(target_buttons, game_buttons.at(j));
+        }
         game_buttons.at(j).set_coords(x_coord, y_coord);
         x_coord += 45;
         if (x_coord >= 1185)
@@ -133,7 +131,6 @@ int main()
     }
 
     InitWindow(windowWidth, windowHeight, "Push");
-    bool initialize_game = false;
     
     while(!WindowShouldClose()) 
     {
