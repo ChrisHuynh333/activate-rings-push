@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <random>
 #include <iterator>
+#include <chrono>
 // Available colors: beige, black, blue, brown, gold, gray, green, magenta,
 // pink, purple, red, white, yellow
 
@@ -22,17 +23,23 @@ class Button
         int x;
         int y;
         
-        void set_button_attributes(Color color_one_input, Color color_two_input, int color_one_position, int color_two_position)
+        void set_button_attributes(Color &color_one_input, Color &color_two_input, int &color_one_position, int &color_two_position)
         {
             color_one = color_one_input;
             color_two = color_two_input;
             color_one_pos = color_one_position;
             color_two_pos = color_two_position;
         }
-        void set_coords(int x_input, int y_input)
+        void set_coords(int &x_input, int &y_input)
         {
             x = x_input;
             y = y_input;
+        }
+
+        void set_colors(Color color_one_input, Color color_two_input)
+        {
+            color_one = color_one_input;
+            color_two = color_two_input;
         }
         
 };
@@ -41,10 +48,18 @@ class Target_Button:public Button
 {
     public:
         bool found = false;
+        int x_in_game;
+        int y_in_game;
 
         void set_found()
         {
             found = true;
+        }
+
+        void set_in_game_coords(int &x_input, int &y_input)
+        {
+            x_in_game = x_input;
+            y_in_game = y_input;
         }
 };
 int get_random_pos_num()
@@ -105,7 +120,7 @@ int main()
     int windowWidth = 1200;
     int windowHeight = 800;
 
-    int target_button_x_coord = 150;
+    int target_button_x_coord = int(150);
     int target_button_y_coord = 400;
     int x_coord = 15;
     int y_coord = 500;
@@ -116,12 +131,24 @@ int main()
             target_buttons.at(j).set_coords(target_button_x_coord, target_button_y_coord);
             target_button_x_coord += 300;
         }
+        game_buttons.at(j).set_coords(x_coord, y_coord);
         if(!game_buttons.at(j).color_one_pos)
         {
             set_game_button_attributes(game_buttons.at(j));
             check_duplicate_colors_to_targets(target_buttons, game_buttons.at(j));
         }
-        game_buttons.at(j).set_coords(x_coord, y_coord);
+        else
+        {
+            for(int a = 0; a < 4; a++)
+            {
+                if(target_buttons.at(a).color_one_pos == game_buttons.at(j).color_one_pos && target_buttons.at(a).color_two_pos == game_buttons.at(j).color_two_pos)
+                {
+                    target_buttons.at(a).set_in_game_coords(game_buttons.at(j).x, game_buttons.at(j).y);
+                    break;
+                }
+            }
+        }
+        
         x_coord += 45;
         if (x_coord >= 1185)
         {
@@ -129,36 +156,87 @@ int main()
             y_coord += 45;
         }
     }
-
-    InitWindow(windowWidth, windowHeight, "Push");
     
+    InitWindow(windowWidth, windowHeight, "Push");
+    const clock_t begin_time = std::clock();
+    int past_timer = 0;
+    int current_timer;
+    int minutes = 0;
+    int seconds = 5;
+    bool game_over = false;
     while(!WindowShouldClose()) 
     {
-        BeginDrawing();
-        ClearBackground(WHITE);
-            
-        for (int k = 0; k < num_of_buttons; k++)
+        while(!game_over)
         {
-            if (k < 4)
+            current_timer = float( clock () - begin_time );
+            if (current_timer - past_timer > 1000)
             {
+                past_timer = current_timer;
+                if (seconds == 0) 
+                {
+                    if (minutes > 0)
+                    {
+                        seconds = 59;
+                        minutes -= 1;
+                    }
+                    else
+                    {
+                        game_over = true;
+                        DrawText("Game Over! Out Of Time", 320, 310, 50, RED);
+                    }
+                }
+                else
+                {
+                    seconds -= 1;
+                }
+            }
+            BeginDrawing();
+            ClearBackground(WHITE);
+            DrawText(TextFormat("%02d:%02d", minutes, seconds), 15, 15, 50, BLACK);
+            for (int k = 0; k < num_of_buttons; k++)
+            {
+                if (k < 4)
+                {
+                    
+                    DrawCircleGradient(target_buttons.at(k).x, target_buttons.at(k).y, 30, target_buttons.at(k).color_one, target_buttons.at(k).color_two);
+                    
+                }
                 
-                DrawCircleGradient(target_buttons.at(k).x, target_buttons.at(k).y, 30, target_buttons.at(k).color_one, target_buttons.at(k).color_two);
+                DrawCircleGradient(game_buttons[k].x, game_buttons[k].y, game_buttons[k].radius, game_buttons[k].color_one, game_buttons[k].color_two);
                 
             }
+            if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                for (int l = 0; l < 4; l++)
+                {
+                    if(GetMousePosition().x <= target_buttons.at(l).x_in_game + 15 && GetMousePosition().x >= target_buttons.at(l).x_in_game - 15 && GetMousePosition().y <= target_buttons.at(l).y_in_game + 15 && GetMousePosition().y >= target_buttons.at(l).y_in_game - 15)
+                    {
+                        for(int m = 0; m < num_of_buttons; m++)
+                        {
+                            if (game_buttons.at(m).x == target_buttons.at(l).x_in_game && game_buttons.at(m).y == target_buttons.at(l).y_in_game)
+                            {
+                                std::cout << game_buttons.at(m).x << "/" << game_buttons.at(m).y << "\n";
+                                game_buttons.at(m).set_colors(WHITE, WHITE);
+                                target_buttons.at(l).set_colors(WHITE, WHITE);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
             
-            DrawCircleGradient(game_buttons[k].x, game_buttons[k].y, game_buttons[k].radius, game_buttons[k].color_one, game_buttons[k].color_two);
-            
+            EndDrawing();
         }
-        // if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        // {
-
-        //     if(GetMousePosition().x <= button_one.x + 25 && GetMousePosition().x >= button_one.x - 25)
-        //     {
-        //         std::cout << "Hit!" << "\n";
-        //     }
-        // }
-        
-        EndDrawing();
+        if(game_over)
+        {
+            _sleep(5000);
+            CloseWindow();
+        }
     }
-    CloseWindow();
+    if(!game_over)
+    {   
+        CloseWindow();
+    }
+    
 }
