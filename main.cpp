@@ -62,6 +62,21 @@ class Target_Button:public Button
             y_in_game = y_input;
         }
 };
+
+class Lives
+{
+    public:
+        Color color;
+        std::string color_str;
+        int x;
+
+        void set_attributes(Color color_input, std::string &color_string, int &x_input)
+        {
+            color = color_input;
+            color_str = color_string;
+            x = x_input;
+        }
+};
 int get_random_pos_num()
 {
     
@@ -104,7 +119,7 @@ void check_duplicate_colors_to_targets(std::vector<Target_Button> &targets, Butt
 int main() 
 {
     srand (time(NULL));
-    int num_of_buttons = 182;
+    int num_of_buttons = 8;
     std::vector<Button> game_buttons(num_of_buttons);
     std::vector<Target_Button> target_buttons(4);
     
@@ -113,12 +128,19 @@ int main()
         set_game_button_attributes(game_buttons.at(i));
         // ADD THESE AS POINTERS?
         target_buttons.at(i).set_button_attributes(game_buttons.at(i).color_one, game_buttons.at(i).color_two, game_buttons.at(i).color_one_pos, game_buttons.at(i).color_two_pos);
+        std::cout << i << "/" << target_buttons.at(i).color_one_pos << "/" << target_buttons.at(i).color_two_pos << "\n";
     }
     std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(game_buttons.begin(), game_buttons.end(), g);
     int windowWidth = 1200;
     int windowHeight = 800;
+
+    for (int i = 0; i < num_of_buttons; i++)
+    {
+        std::cout << i << "/" << game_buttons.at(i).color_one_pos << "/" << game_buttons.at(i).color_two_pos << "\n";
+    }
+
 
     int target_button_x_coord = int(150);
     int target_button_y_coord = 400;
@@ -157,21 +179,37 @@ int main()
         }
     }
     
-    InitWindow(windowWidth, windowHeight, "Push");
+    
     const clock_t begin_time = std::clock();
-    int past_timer = 0;
+    int past_timer_clock = 0;
     int current_timer;
-    int minutes = 0;
-    int seconds = 5;
+    int minutes = 2;
+    int seconds = 0;
+    int score = 1000;
     bool game_over = false;
+    int past_timer_score = 0;
+
+    std::vector<Lives> lives(5);
+    int lives_x = 237;
+    for(int i = 0; i < 5; i++)
+    {
+        std::string color = "green";
+        lives.at(i).set_attributes(GREEN, color, lives_x);
+        lives_x += 30;
+    }
+
+
+    InitWindow(windowWidth, windowHeight, "Push");
     while(!WindowShouldClose()) 
     {
         while(!game_over)
         {
+            BeginDrawing();
+            ClearBackground(WHITE);
             current_timer = float( clock () - begin_time );
-            if (current_timer - past_timer > 1000)
+            if (current_timer - past_timer_clock > 1000)
             {
-                past_timer = current_timer;
+                past_timer_clock = current_timer;
                 if (seconds == 0) 
                 {
                     if (minutes > 0)
@@ -190,9 +228,28 @@ int main()
                     seconds -= 1;
                 }
             }
-            BeginDrawing();
-            ClearBackground(WHITE);
-            DrawText(TextFormat("%02d:%02d", minutes, seconds), 15, 15, 50, BLACK);
+            if (current_timer - past_timer_score > 120 && score > 0)
+            {
+                past_timer_score = current_timer;
+                score -= 1;
+            }
+            
+            DrawText("Time", 17, 15, 35, BLACK);
+            DrawText(TextFormat("%02d:%02d", minutes, seconds), 15, 40, 50, BLACK);
+            DrawText("Lives", 250, 15, 35, BLACK);
+            for(int i = 0; i < 5; i++)
+            {
+                DrawCircle(lives.at(i).x, 65, 10, lives.at(i).color);
+            }
+            DrawText("Score", 550, 15, 35, BLACK);
+            DrawText(TextFormat("%d", score), 550, 40, 50, BLACK);
+
+            if (lives.at(0).color_str == "red")
+            {
+                game_over = true;
+                DrawText("Game Over! Out Of Lives", 320, 310, 50, RED);
+            }
+
             for (int k = 0; k < num_of_buttons; k++)
             {
                 if (k < 4)
@@ -207,36 +264,51 @@ int main()
             }
             if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
             {
-                for (int l = 0; l < 4; l++)
+                if(GetMousePosition().y >= 485)
                 {
-                    if(GetMousePosition().x <= target_buttons.at(l).x_in_game + 15 && GetMousePosition().x >= target_buttons.at(l).x_in_game - 15 && GetMousePosition().y <= target_buttons.at(l).y_in_game + 15 && GetMousePosition().y >= target_buttons.at(l).y_in_game - 15)
+                
+                    for (int l = 0; l < 4; l++)
                     {
-                        for(int m = 0; m < num_of_buttons; m++)
+                        if(GetMousePosition().x <= target_buttons.at(l).x_in_game + 15 && GetMousePosition().x >= target_buttons.at(l).x_in_game - 15 && GetMousePosition().y <= target_buttons.at(l).y_in_game + 15 && GetMousePosition().y >= target_buttons.at(l).y_in_game - 15)
                         {
-                            if (game_buttons.at(m).x == target_buttons.at(l).x_in_game && game_buttons.at(m).y == target_buttons.at(l).y_in_game)
+                            for(int m = 0; m < num_of_buttons; m++)
                             {
-                                std::cout << game_buttons.at(m).x << "/" << game_buttons.at(m).y << "\n";
-                                game_buttons.at(m).set_colors(WHITE, WHITE);
-                                target_buttons.at(l).set_colors(WHITE, WHITE);
-                                break;
+                                if (game_buttons.at(m).x == target_buttons.at(l).x_in_game && game_buttons.at(m).y == target_buttons.at(l).y_in_game)
+                                {
+                                    game_buttons.at(m).set_colors(WHITE, WHITE);
+                                    target_buttons.at(l).set_colors(WHITE, WHITE);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        else if (l == 3)
+                        {
+                            for (int i = 4; i > -1; i--)
+                            {
+                                if(lives.at(i).color_str == "green")
+                                {
+                                    std::string color = "red";
+                                    lives.at(i).set_attributes(RED, color, lives.at(i).x);
+                                    break;
+                                }
                             }
                         }
-                        break;
                     }
                 }
             }
-            
             EndDrawing();
+
+            if(IsKeyPressed(KEY_ESCAPE))
+            {
+                CloseWindow();
+                break;
+            }
         }
         if(game_over)
         {
             _sleep(5000);
             CloseWindow();
         }
-    }
-    if(!game_over)
-    {   
-        CloseWindow();
-    }
-    
+    }    
 }
