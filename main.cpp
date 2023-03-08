@@ -7,10 +7,11 @@
 #include <random>
 #include <iterator>
 #include <chrono>
+#include <thread>
 // Available colors: beige, black, blue, brown, gold, gray, green, magenta,
 // pink, purple, red, white, yellow
 
-const std::vector<Color> color_array {BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
+std::vector<Color> color_array {BLACK, BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
 
 class Button 
 {
@@ -79,22 +80,19 @@ class Lives
 };
 int get_random_pos_num()
 {
-    
-    int number = rand() % color_array.size();
+    // A bug occurs when index 0 is selected, so I added "BLACK" at index 0 (I don't want to use black) and shifted the vector over.
+    // Was unable to figure out why the bug occurred. If a target button had a color_one with index 0, the game_button had a different
+    // circle color scheme even though all the button attributes were the same.
+    int number = rand() % (color_array.size() - 1) + 1;
     return number;
 }
 
-Color get_color(int &position, const std::vector<Color> &colors)
-{
-    Color color = colors.at(position);
-    return color;
-}
 void set_game_button_attributes(Button &button)
 {
     int color_pos_one = get_random_pos_num();
     int color_pos_two = get_random_pos_num();
-    Color get_color_one = get_color(color_pos_one, color_array);
-    Color get_color_two = get_color(color_pos_two, color_array);
+    Color get_color_one = color_array.at(color_pos_one);
+    Color get_color_two = color_array.at(color_pos_two);
     button.set_button_attributes(get_color_one, get_color_two, color_pos_one, color_pos_two);
 }
 
@@ -128,20 +126,12 @@ int main()
         set_game_button_attributes(game_buttons.at(i));
         // ADD THESE AS POINTERS?
         target_buttons.at(i).set_button_attributes(game_buttons.at(i).color_one, game_buttons.at(i).color_two, game_buttons.at(i).color_one_pos, game_buttons.at(i).color_two_pos);
-        std::cout << i << "/" << target_buttons.at(i).color_one_pos << "/" << target_buttons.at(i).color_two_pos << "\n";
     }
     std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(game_buttons.begin(), game_buttons.end(), g);
     int windowWidth = 1200;
     int windowHeight = 800;
-
-    for (int i = 0; i < num_of_buttons; i++)
-    {
-        std::cout << i << "/" << game_buttons.at(i).color_one_pos << "/" << game_buttons.at(i).color_two_pos << "\n";
-    }
-
-
     int target_button_x_coord = int(150);
     int target_button_y_coord = 400;
     int x_coord = 15;
@@ -163,7 +153,7 @@ int main()
         {
             for(int a = 0; a < 4; a++)
             {
-                if(target_buttons.at(a).color_one_pos == game_buttons.at(j).color_one_pos && target_buttons.at(a).color_two_pos == game_buttons.at(j).color_two_pos)
+                if(!target_buttons.at(a).x_in_game && target_buttons.at(a).color_one_pos == game_buttons.at(j).color_one_pos && target_buttons.at(a).color_two_pos == game_buttons.at(j).color_two_pos)
                 {
                     target_buttons.at(a).set_in_game_coords(game_buttons.at(j).x, game_buttons.at(j).y);
                     break;
@@ -206,7 +196,7 @@ int main()
         {
             BeginDrawing();
             ClearBackground(WHITE);
-            current_timer = float( clock () - begin_time );
+            // current_timer = float( clock () - begin_time );
             if (current_timer - past_timer_clock > 1000)
             {
                 past_timer_clock = current_timer;
@@ -259,7 +249,7 @@ int main()
                     
                 }
                 
-                DrawCircleGradient(game_buttons[k].x, game_buttons[k].y, game_buttons[k].radius, game_buttons[k].color_one, game_buttons[k].color_two);
+                DrawCircleGradient(game_buttons.at(k).x, game_buttons.at(k).y, game_buttons.at(k).radius, game_buttons.at(k).color_one, game_buttons.at(k).color_two);
                 
             }
             if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -307,7 +297,7 @@ int main()
         }
         if(game_over)
         {
-            _sleep(5000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
             CloseWindow();
         }
     }    
