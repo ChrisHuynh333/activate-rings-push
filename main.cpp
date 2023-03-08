@@ -8,10 +8,11 @@
 #include <iterator>
 #include <chrono>
 #include <thread>
+#include <format>
 // Available colors: beige, black, blue, brown, gold, gray, green, magenta,
 // pink, purple, red, white, yellow
 
-std::vector<Color> color_array {BLACK, BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
+
 
 class Button 
 {
@@ -78,6 +79,14 @@ class Lives
             x = x_input;
         }
 };
+
+class Round:public Lives{};
+
+const std::vector<Color> color_array {BLACK, BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
+const int num_of_buttons = 8;
+std::vector<Button> game_buttons(num_of_buttons);
+std::vector<Target_Button> target_buttons(4);
+
 int get_random_pos_num()
 {
     // A bug occurs when index 0 is selected, so I added "BLACK" at index 0 (I don't want to use black) and shifted the vector over.
@@ -114,12 +123,10 @@ void check_duplicate_colors_to_targets(std::vector<Target_Button> &targets, Butt
     }
 }
 
-int main() 
+void initialize_game()
 {
-    srand (time(NULL));
-    int num_of_buttons = 8;
-    std::vector<Button> game_buttons(num_of_buttons);
-    std::vector<Target_Button> target_buttons(4);
+    
+    
     
     for (int i = 0; i < 4; i ++)
     {   
@@ -130,8 +137,7 @@ int main()
     std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(game_buttons.begin(), game_buttons.end(), g);
-    int windowWidth = 1200;
-    int windowHeight = 800;
+    
     int target_button_x_coord = int(150);
     int target_button_y_coord = 400;
     int x_coord = 15;
@@ -168,8 +174,22 @@ int main()
             y_coord += 45;
         }
     }
-    
-    
+}
+void new_round()
+{
+    for (int i = 0; i < num_of_buttons; i++)
+    {
+        if(i < 4)
+        {
+            target_buttons.at(i) = Target_Button();
+        }
+        game_buttons.at(i) = Button();
+    }
+    initialize_game();
+}
+int main() 
+{
+    srand (time(NULL));
     const clock_t begin_time = std::clock();
     int past_timer_clock = 0;
     int current_timer;
@@ -178,22 +198,74 @@ int main()
     int score = 1000;
     bool game_over = false;
     int past_timer_score = 0;
-
+    int correct_counter = 0;
+    int round_counter = 1;
     std::vector<Lives> lives(5);
-    int lives_x = 237;
+    std::vector<Round> rounds(3);
+    int lives_x = 333;
+    int rounds_x = 670;
+    int windowWidth = 1200;
+    int windowHeight = 800;
     for(int i = 0; i < 5; i++)
     {
+        if(i < 3)
+        {
+            if(i == 0)
+            {
+                std::string color = "green";
+                rounds.at(i).set_attributes(GREEN, color, rounds_x);
+            }
+            else
+            {
+                std::string color = "black";
+                rounds.at(i).set_attributes(BLACK, color, rounds_x);
+            }
+            std::cout << rounds.at(i).color_str << "\n";
+        }
         std::string color = "green";
         lives.at(i).set_attributes(GREEN, color, lives_x);
         lives_x += 30;
+        rounds_x += 30;
     }
 
 
     InitWindow(windowWidth, windowHeight, "Push");
+    initialize_game();
     while(!WindowShouldClose()) 
     {
         while(!game_over)
         {
+            if (correct_counter == 4)
+            {
+                if(round_counter < 3)
+                {
+                    new_round();
+                    std::string color = "green";
+                    rounds.at(round_counter).set_attributes(GREEN, color, rounds.at(round_counter).x);
+                    correct_counter = 0;
+                    round_counter ++;
+                }
+                else
+                {
+                    int lives_counter = 0;
+                    for(int i = 0; i < 5; i++)
+                    {
+                        if(lives.at(i).color_str == "green")
+                        {
+                            lives_counter ++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    int lives_points = lives_counter * 50;
+                    DrawText("Congratulations, you won!", 270, 200, 50, GREEN);
+                    DrawText(TextFormat("Your score is %d plus %d more from lives.", score, lives_points), 50, 250, 50, GREEN);
+                    game_over = true;
+                }
+                
+            }
             BeginDrawing();
             ClearBackground(WHITE);
             // current_timer = float( clock () - begin_time );
@@ -224,15 +296,20 @@ int main()
                 score -= 1;
             }
             
-            DrawText("Time", 17, 15, 35, BLACK);
-            DrawText(TextFormat("%02d:%02d", minutes, seconds), 15, 40, 50, BLACK);
-            DrawText("Lives", 250, 15, 35, BLACK);
+            DrawText("Time", 100, 15, 35, BLACK);
+            DrawText(TextFormat("%02d:%02d", minutes, seconds), 80, 50, 50, BLACK);
+            DrawText("Lives", 350, 15, 35, BLACK);
             for(int i = 0; i < 5; i++)
             {
-                DrawCircle(lives.at(i).x, 65, 10, lives.at(i).color);
+                DrawCircle(lives.at(i).x, 75, 10, lives.at(i).color);
             }
-            DrawText("Score", 550, 15, 35, BLACK);
-            DrawText(TextFormat("%d", score), 550, 40, 50, BLACK);
+            DrawText("Round", 650, 15, 35, BLACK);
+            for(int i = 0; i < 3; i++)
+            {
+                DrawCircle(rounds.at(i).x, 75, 10, rounds.at(i).color);
+            }
+            DrawText("Score", 950, 15, 35, BLACK);
+            DrawText(TextFormat("%d", score), 960, 50, 50, BLACK);
 
             if (lives.at(0).color_str == "red")
             {
@@ -267,6 +344,7 @@ int main()
                                 {
                                     game_buttons.at(m).set_colors(WHITE, WHITE);
                                     target_buttons.at(l).set_colors(WHITE, WHITE);
+                                    correct_counter ++;
                                     break;
                                 }
                             }
