@@ -80,6 +80,9 @@
 		"ratio": "cpp",
 		"sstream": "cpp",
 		"variant": "cpp",
-		"__functional_base": "cpp"
+		"__functional_base": "cpp",
+		"semaphore": "cpp",
+		"stop_token": "cpp",
+		"thread": "cpp"
 	}
 }

@@ -8,7 +8,6 @@
 #include <iterator>
 #include <chrono>
 #include <thread>
-#include <format>
 // Available colors: beige, black, blue, brown, gold, gray, green, magenta,
 // pink, purple, red, white, yellow
 
@@ -83,7 +82,7 @@ class Lives
 class Round:public Lives{};
 
 const std::vector<Color> color_array {BLACK, BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
-const int num_of_buttons = 8;
+const int num_of_buttons = 182;
 std::vector<Button> game_buttons(num_of_buttons);
 std::vector<Target_Button> target_buttons(4);
 
@@ -125,9 +124,6 @@ void check_duplicate_colors_to_targets(std::vector<Target_Button> &targets, Butt
 
 void initialize_game()
 {
-    
-    
-    
     for (int i = 0; i < 4; i ++)
     {   
         set_game_button_attributes(game_buttons.at(i));
@@ -210,7 +206,7 @@ int main()
     {
         if(i < 3)
         {
-            if(i == 0)
+            if(i < round_counter)
             {
                 std::string color = "green";
                 rounds.at(i).set_attributes(GREEN, color, rounds_x);
@@ -220,7 +216,6 @@ int main()
                 std::string color = "black";
                 rounds.at(i).set_attributes(BLACK, color, rounds_x);
             }
-            std::cout << rounds.at(i).color_str << "\n";
         }
         std::string color = "green";
         lives.at(i).set_attributes(GREEN, color, lives_x);
@@ -231,152 +226,150 @@ int main()
 
     InitWindow(windowWidth, windowHeight, "Push");
     initialize_game();
-    while(!WindowShouldClose()) 
+    while(!WindowShouldClose() && !game_over) 
     {
-        while(!game_over)
+        if (correct_counter == 4)
         {
-            if (correct_counter == 4)
+            if(round_counter < 3)
             {
-                if(round_counter < 3)
-                {
-                    new_round();
-                    std::string color = "green";
-                    rounds.at(round_counter).set_attributes(GREEN, color, rounds.at(round_counter).x);
-                    correct_counter = 0;
-                    round_counter ++;
-                }
-                else
-                {
-                    int lives_counter = 0;
-                    for(int i = 0; i < 5; i++)
-                    {
-                        if(lives.at(i).color_str == "green")
-                        {
-                            lives_counter ++;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    int lives_points = lives_counter * 50;
-                    DrawText("Congratulations, you won!", 270, 200, 50, GREEN);
-                    DrawText(TextFormat("Your score is %d plus %d more from lives.", score, lives_points), 50, 250, 50, GREEN);
-                    game_over = true;
-                }
-                
+                new_round();
+                std::string color = "green";
+                rounds.at(round_counter).set_attributes(GREEN, color, rounds.at(round_counter).x);
+                correct_counter = 0;
+                round_counter ++;
             }
-            BeginDrawing();
-            ClearBackground(WHITE);
-            // current_timer = float( clock () - begin_time );
-            if (current_timer - past_timer_clock > 1000)
+            else
             {
-                past_timer_clock = current_timer;
-                if (seconds == 0) 
+                int lives_counter = 0;
+                for(int i = 0; i < 5; i++)
                 {
-                    if (minutes > 0)
+                    if(lives.at(i).color_str == "green")
                     {
-                        seconds = 59;
-                        minutes -= 1;
+                        lives_counter ++;
                     }
                     else
                     {
-                        game_over = true;
-                        DrawText("Game Over! Out Of Time", 320, 310, 50, RED);
+                        break;
                     }
+                }
+                int lives_points = lives_counter * 50;
+                DrawText("Congratulations, you won!", 270, 200, 50, GREEN);
+                DrawText(TextFormat("Your score is %d plus %d more from lives.", score, lives_points), 50, 250, 50, GREEN);
+                game_over = true;
+            }
+            
+        }
+        BeginDrawing();
+        ClearBackground(WHITE);
+        current_timer = float( clock () - begin_time );
+        if (current_timer - past_timer_clock > 1000)
+        {
+            past_timer_clock = current_timer;
+            if (seconds == 0) 
+            {
+                if (minutes > 0)
+                {
+                    seconds = 59;
+                    minutes -= 1;
                 }
                 else
                 {
-                    seconds -= 1;
+                    game_over = true;
+                    DrawText("Game Over! Out Of Time", 320, 310, 50, RED);
                 }
             }
-            if (current_timer - past_timer_score > 120 && score > 0)
+            else
             {
-                past_timer_score = current_timer;
-                score -= 1;
+                seconds -= 1;
+            }
+        }
+        if (current_timer - past_timer_score > 120 && score > 0)
+        {
+            past_timer_score = current_timer;
+            score -= 1;
+        }
+        
+        DrawText("Time", 100, 15, 35, BLACK);
+        DrawText(TextFormat("%02d:%02d", minutes, seconds), 80, 50, 50, BLACK);
+        DrawText("Lives", 350, 15, 35, BLACK);
+        for(int i = 0; i < 5; i++)
+        {
+            DrawCircle(lives.at(i).x, 75, 10, lives.at(i).color);
+        }
+        DrawText("Round", 650, 15, 35, BLACK);
+        for(int i = 0; i < 3; i++)
+        {
+            DrawCircle(rounds.at(i).x, 75, 10, rounds.at(i).color);
+        }
+        DrawText("Score", 950, 15, 35, BLACK);
+        DrawText(TextFormat("%d", score), 960, 50, 50, BLACK);
+
+        if (lives.at(0).color_str == "red")
+        {
+            game_over = true;
+            DrawText("Game Over! Out Of Lives", 320, 310, 50, RED);
+        }
+
+        for (int k = 0; k < num_of_buttons; k++)
+        {
+            if (k < 4)
+            {
+                
+                DrawCircleGradient(target_buttons.at(k).x, target_buttons.at(k).y, 30, target_buttons.at(k).color_one, target_buttons.at(k).color_two);
+                
             }
             
-            DrawText("Time", 100, 15, 35, BLACK);
-            DrawText(TextFormat("%02d:%02d", minutes, seconds), 80, 50, 50, BLACK);
-            DrawText("Lives", 350, 15, 35, BLACK);
-            for(int i = 0; i < 5; i++)
+            DrawCircleGradient(game_buttons.at(k).x, game_buttons.at(k).y, game_buttons.at(k).radius, game_buttons.at(k).color_one, game_buttons.at(k).color_two);
+            
+        }
+        if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            if(GetMousePosition().y >= 485)
             {
-                DrawCircle(lives.at(i).x, 75, 10, lives.at(i).color);
-            }
-            DrawText("Round", 650, 15, 35, BLACK);
-            for(int i = 0; i < 3; i++)
-            {
-                DrawCircle(rounds.at(i).x, 75, 10, rounds.at(i).color);
-            }
-            DrawText("Score", 950, 15, 35, BLACK);
-            DrawText(TextFormat("%d", score), 960, 50, 50, BLACK);
-
-            if (lives.at(0).color_str == "red")
-            {
-                game_over = true;
-                DrawText("Game Over! Out Of Lives", 320, 310, 50, RED);
-            }
-
-            for (int k = 0; k < num_of_buttons; k++)
-            {
-                if (k < 4)
+            
+                for (int l = 0; l < 4; l++)
                 {
-                    
-                    DrawCircleGradient(target_buttons.at(k).x, target_buttons.at(k).y, 30, target_buttons.at(k).color_one, target_buttons.at(k).color_two);
-                    
-                }
-                
-                DrawCircleGradient(game_buttons.at(k).x, game_buttons.at(k).y, game_buttons.at(k).radius, game_buttons.at(k).color_one, game_buttons.at(k).color_two);
-                
-            }
-            if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                if(GetMousePosition().y >= 485)
-                {
-                
-                    for (int l = 0; l < 4; l++)
+                    if(GetMousePosition().x <= target_buttons.at(l).x_in_game + 15 && GetMousePosition().x >= target_buttons.at(l).x_in_game - 15 && GetMousePosition().y <= target_buttons.at(l).y_in_game + 15 && GetMousePosition().y >= target_buttons.at(l).y_in_game - 15)
                     {
-                        if(GetMousePosition().x <= target_buttons.at(l).x_in_game + 15 && GetMousePosition().x >= target_buttons.at(l).x_in_game - 15 && GetMousePosition().y <= target_buttons.at(l).y_in_game + 15 && GetMousePosition().y >= target_buttons.at(l).y_in_game - 15)
+                        for(int m = 0; m < num_of_buttons; m++)
                         {
-                            for(int m = 0; m < num_of_buttons; m++)
+                            if (game_buttons.at(m).x == target_buttons.at(l).x_in_game && game_buttons.at(m).y == target_buttons.at(l).y_in_game)
                             {
-                                if (game_buttons.at(m).x == target_buttons.at(l).x_in_game && game_buttons.at(m).y == target_buttons.at(l).y_in_game)
-                                {
-                                    game_buttons.at(m).set_colors(WHITE, WHITE);
-                                    target_buttons.at(l).set_colors(WHITE, WHITE);
-                                    correct_counter ++;
-                                    break;
-                                }
+                                game_buttons.at(m).set_colors(WHITE, WHITE);
+                                target_buttons.at(l).set_colors(WHITE, WHITE);
+                                correct_counter ++;
+                                break;
                             }
-                            break;
                         }
-                        else if (l == 3)
+                        break;
+                    }
+                    else if (l == 3)
+                    {
+                        for (int i = 4; i > -1; i--)
                         {
-                            for (int i = 4; i > -1; i--)
+                            if(lives.at(i).color_str == "green")
                             {
-                                if(lives.at(i).color_str == "green")
-                                {
-                                    std::string color = "red";
-                                    lives.at(i).set_attributes(RED, color, lives.at(i).x);
-                                    break;
-                                }
+                                std::string color = "red";
+                                lives.at(i).set_attributes(RED, color, lives.at(i).x);
+                                break;
                             }
                         }
                     }
                 }
             }
-            EndDrawing();
+        }
+        EndDrawing();
 
-            if(IsKeyPressed(KEY_ESCAPE))
-            {
-                CloseWindow();
-                break;
-            }
-        }
-        if(game_over)
+        if(IsKeyPressed(KEY_ESCAPE))
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
             CloseWindow();
+            break;
         }
-    }    
+    }
+    if(game_over)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        CloseWindow();
+    }
+       
 }
