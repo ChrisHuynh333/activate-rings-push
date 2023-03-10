@@ -1,5 +1,9 @@
 # Activate Rings Push Clone
 
+# TODO List:
+- Better memory management
+- More efficient coding (too many for loops/linear time complexity where log complexity is likely possible) 
+
 # Gif of Win
 ![](https://github.com/ChrisHuynh333/activate-rings-push/blob/master/gifsForGitHub/Rings-PushWin.gif)
 
