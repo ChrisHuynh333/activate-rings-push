@@ -81,30 +81,25 @@ class Lives
 
 class Round:public Lives{};
 
-const std::vector<Color> color_array {BLACK, BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
-const int num_of_buttons = 182;
-std::vector<Button> game_buttons(num_of_buttons);
-std::vector<Target_Button> target_buttons(4);
-
-int get_random_pos_num()
+int get_random_pos_num(const std::vector<Color> &colors)
 {
     // A bug occurs when index 0 is selected, so I added "BLACK" at index 0 (I don't want to use black) and shifted the vector over.
     // Was unable to figure out why the bug occurred. If a target button had a color_one with index 0, the game_button had a different
     // circle color scheme even though all the button attributes were the same.
-    int number = rand() % (color_array.size() - 1) + 1;
+    int number = rand() % (colors.size() - 1) + 1;
     return number;
 }
 
-void set_game_button_attributes(Button &button)
+void set_game_button_attributes(Button &button, const std::vector<Color> &colors)
 {
-    int color_pos_one = get_random_pos_num();
-    int color_pos_two = get_random_pos_num();
-    Color get_color_one = color_array.at(color_pos_one);
-    Color get_color_two = color_array.at(color_pos_two);
+    int color_pos_one = get_random_pos_num(colors);
+    int color_pos_two = get_random_pos_num(colors);
+    Color get_color_one = colors.at(color_pos_one);
+    Color get_color_two = colors.at(color_pos_two);
     button.set_button_attributes(get_color_one, get_color_two, color_pos_one, color_pos_two);
 }
 
-void check_duplicate_colors_to_targets(std::vector<Target_Button> &targets, Button &test_button)
+void check_duplicate_colors_to_targets(std::vector<Target_Button> &targets, Button &test_button, const std::vector<Color> &colors)
 {
     bool break_bool = true;
     for (int i = 0; i < 4; i++)
@@ -117,47 +112,47 @@ void check_duplicate_colors_to_targets(std::vector<Target_Button> &targets, Butt
     }
     if (!break_bool)
     {
-        set_game_button_attributes(test_button);
-        check_duplicate_colors_to_targets(targets, test_button);
+        set_game_button_attributes(test_button, colors);
+        check_duplicate_colors_to_targets(targets, test_button, colors);
     }
 }
 
-void initialize_game()
+void initialize_game(std::vector<Target_Button> &target_btns, std::vector<Button> &game_btns, const int &num_of_btns, const std::vector<Color> &colors) 
 {
     for (int i = 0; i < 4; i ++)
     {   
-        set_game_button_attributes(game_buttons.at(i));
+        set_game_button_attributes(game_btns.at(i), colors);
         // ADD THESE AS POINTERS?
-        target_buttons.at(i).set_button_attributes(game_buttons.at(i).color_one, game_buttons.at(i).color_two, game_buttons.at(i).color_one_pos, game_buttons.at(i).color_two_pos);
+        target_btns.at(i).set_button_attributes(game_btns.at(i).color_one, game_btns.at(i).color_two, game_btns.at(i).color_one_pos, game_btns.at(i).color_two_pos);
     }
     std::random_device rd;
     std::mt19937 g(rd());
-    std::shuffle(game_buttons.begin(), game_buttons.end(), g);
+    std::shuffle(game_btns.begin(), game_btns.end(), g);
     
     int target_button_x_coord = int(150);
     int target_button_y_coord = 400;
     int x_coord = 15;
     int y_coord = 500;
-    for (int j = 0; j < num_of_buttons; j++)
+    for (int j = 0; j < num_of_btns; j++)
     {
         if(j < 4)
         {
-            target_buttons.at(j).set_coords(target_button_x_coord, target_button_y_coord);
+            target_btns.at(j).set_coords(target_button_x_coord, target_button_y_coord);
             target_button_x_coord += 300;
         }
-        game_buttons.at(j).set_coords(x_coord, y_coord);
-        if(!game_buttons.at(j).color_one_pos)
+        game_btns.at(j).set_coords(x_coord, y_coord);
+        if(!game_btns.at(j).color_one_pos)
         {
-            set_game_button_attributes(game_buttons.at(j));
-            check_duplicate_colors_to_targets(target_buttons, game_buttons.at(j));
+            set_game_button_attributes(game_btns.at(j), colors);
+            check_duplicate_colors_to_targets(target_btns, game_btns.at(j), colors);
         }
         else
         {
             for(int a = 0; a < 4; a++)
             {
-                if(!target_buttons.at(a).x_in_game && target_buttons.at(a).color_one_pos == game_buttons.at(j).color_one_pos && target_buttons.at(a).color_two_pos == game_buttons.at(j).color_two_pos)
+                if(!target_btns.at(a).x_in_game && target_btns.at(a).color_one_pos == game_btns.at(j).color_one_pos && target_btns.at(a).color_two_pos == game_btns.at(j).color_two_pos)
                 {
-                    target_buttons.at(a).set_in_game_coords(game_buttons.at(j).x, game_buttons.at(j).y);
+                    target_btns.at(a).set_in_game_coords(game_btns.at(j).x, game_btns.at(j).y);
                     break;
                 }
             }
@@ -171,21 +166,25 @@ void initialize_game()
         }
     }
 }
-void new_round()
+void new_round(const int &num_of_btns, std::vector<Target_Button> &target_btns, std::vector<Button> &game_btns, const std::vector<Color> &colors)
 {
-    for (int i = 0; i < num_of_buttons; i++)
+    for (int i = 0; i < num_of_btns; i++)
     {
         if(i < 4)
         {
-            target_buttons.at(i) = Target_Button();
+            target_btns.at(i) = Target_Button();
         }
-        game_buttons.at(i) = Button();
+        game_btns.at(i) = Button();
     }
-    initialize_game();
+    initialize_game(target_btns, game_btns, num_of_btns, colors);
 }
 int main() 
 {
     srand (time(NULL));
+    const std::vector<Color> color_array {BLACK, BLUE, GRAY, GREEN, PURPLE, YELLOW, RED};
+    const int num_of_buttons = 182;
+    std::vector<Button> game_buttons(num_of_buttons);
+    std::vector<Target_Button> target_buttons(4);
     const clock_t begin_time = std::clock();
     int past_timer_clock = 0;
     int current_timer;
@@ -197,6 +196,7 @@ int main()
     int correct_counter = 0;
     int round_counter = 1;
     std::vector<Lives> lives(5);
+    int lives_counter = 0;
     std::vector<Round> rounds(3);
     int lives_x = 333;
     int rounds_x = 670;
@@ -225,31 +225,33 @@ int main()
 
 
     InitWindow(windowWidth, windowHeight, "Push");
-    initialize_game();
+    initialize_game(target_buttons, game_buttons, num_of_buttons, color_array);
     while(!WindowShouldClose() && !game_over) 
     {
         if (correct_counter == 4)
         {
             if(round_counter < 3)
             {
-                new_round();
-                std::string color = "green";
-                rounds.at(round_counter).set_attributes(GREEN, color, rounds.at(round_counter).x);
-                correct_counter = 0;
-                round_counter ++;
-            }
-            else
-            {
-                int lives_counter = 0;
-                for(int i = 0; i < 5; i++)
+                if(round_counter < 3)
                 {
-                    if(lives.at(i).color_str == "green")
+                    new_round(num_of_buttons, target_buttons, game_buttons, color_array);
+                    std::string color = "green";
+                    rounds.at(round_counter).set_attributes(GREEN, color, rounds.at(round_counter).x);
+                    correct_counter = 0;
+                    round_counter ++;
+                }
+                else
+                {
+                    for(int i = 0; i < 5; i++)
                     {
-                        lives_counter ++;
-                    }
-                    else
-                    {
-                        break;
+                        if(lives.at(i).color_str == "green")
+                        {
+                            lives_counter ++;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
                 int lives_points = lives_counter * 50;
