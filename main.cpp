@@ -185,23 +185,21 @@ int main()
     const int num_of_buttons = 182;
     std::vector<Button> game_buttons(num_of_buttons);
     std::vector<Target_Button> target_buttons(4);
-    const clock_t begin_time = std::clock();
-    int past_timer_clock = 0;
-    int current_timer;
+    const auto start_time = std::chrono::high_resolution_clock::now();
     int minutes = 2;
     int seconds = 0;
     int score = 1000;
     bool game_over = false;
-    int past_timer_score = 0;
     int correct_counter = 0;
     int round_counter = 1;
     std::vector<Lives> lives(5);
-    int lives_counter = 0;
     std::vector<Round> rounds(3);
     int lives_x = 333;
     int rounds_x = 670;
     int windowWidth = 1200;
     int windowHeight = 800;
+    int one_sec_tracker = 1;
+    double score_to_time_tracker = 0.12;
     for(int i = 0; i < 5; i++)
     {
         if(i < 3)
@@ -232,26 +230,24 @@ int main()
         {
             if(round_counter < 3)
             {
-                if(round_counter < 3)
+                new_round(num_of_buttons, target_buttons, game_buttons, color_array);
+                std::string color = "green";
+                rounds.at(round_counter).set_attributes(GREEN, color, rounds.at(round_counter).x);
+                correct_counter = 0;
+                round_counter ++;
+            }
+            else
+            {
+                int lives_counter = 0;
+                for(int i = 0; i < 5; i++)
                 {
-                    new_round(num_of_buttons, target_buttons, game_buttons, color_array);
-                    std::string color = "green";
-                    rounds.at(round_counter).set_attributes(GREEN, color, rounds.at(round_counter).x);
-                    correct_counter = 0;
-                    round_counter ++;
-                }
-                else
-                {
-                    for(int i = 0; i < 5; i++)
+                    if(lives.at(i).color_str == "green")
                     {
-                        if(lives.at(i).color_str == "green")
-                        {
-                            lives_counter ++;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        lives_counter ++;
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
                 int lives_points = lives_counter * 50;
@@ -260,13 +256,16 @@ int main()
                 game_over = true;
             }
             
+            
+            
         }
         BeginDrawing();
         ClearBackground(WHITE);
-        current_timer = float( clock () - begin_time );
-        if (current_timer - past_timer_clock > 1000)
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_difference = end - start_time;
+        if (time_difference.count() > one_sec_tracker)
         {
-            past_timer_clock = current_timer;
+            one_sec_tracker++;
             if (seconds == 0) 
             {
                 if (minutes > 0)
@@ -285,9 +284,9 @@ int main()
                 seconds -= 1;
             }
         }
-        if (current_timer - past_timer_score > 120 && score > 0)
+        if (time_difference.count() > score_to_time_tracker && score > 0)
         {
-            past_timer_score = current_timer;
+            score_to_time_tracker += 0.12;
             score -= 1;
         }
         
